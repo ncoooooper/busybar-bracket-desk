@@ -1,7 +1,7 @@
 {
   "name": "busybar-bracket-desk",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Run a single-elimination desk tournament with byes, undo and up to eight entrants.",
   "author": "ncoooooper",
   "type": "module",
