@@ -1,0 +1,12 @@
+{
+  "format_version": 1,
+  "version": 1,
+  "fields": {
+    "players": {
+      "type": "string",
+      "label": "Players separated by comma",
+      "default": "Ari,Bo,Cam,Dee,Eli",
+      "max_length": 115
+    }
+  }
+}

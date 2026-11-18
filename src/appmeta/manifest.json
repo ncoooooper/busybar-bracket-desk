@@ -4,6 +4,6 @@
   "name": "Bracket Desk",
   "version": "0.1.0",
   "api_version": "27.12.0",
-  "description": "Bracket Desk",
+  "description": "Run a single-elimination desk tournament with byes, undo and up to eight entrants.",
   "author": "ncoooooper"
 }

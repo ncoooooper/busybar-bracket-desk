@@ -1,66 +1,11 @@
-import { device } from "@shared/device";
-import { column, render, type Node } from "@busy-app/busy-lib";
-import manifest from "./appmeta/manifest.json";
+import {desk} from "@shared/desk";
 
-/** The name the app draws under; the device clears elements by this id. */
-const APP = manifest.id;
-
-/** How often the screen is redrawn. */
-const TICK_MS = 1000;
-
-const WHITE = "#FFFFFFFF";
-const SUBTLE_WHITE = "#FFFFFF80";
-
-/**
- * The frame drawn on every tick. The screen is 72×16, so two short lines are about all that fits.
- */
-function frame(ticks: number): Node {
-  return column({ justify: "center", align: "center" }, [
-    { type: "text", id: "title", text: "Hello", font: "bold", color: WHITE },
-    {
-      type: "text",
-      id: "ticks",
-      text: String(ticks),
-      font: "small",
-      color: SUBTLE_WHITE,
-    },
-  ]);
-}
-
-/** Sends one frame to the device. */
-async function draw(ticks: number): Promise<void> {
-  const elements = render(frame(ticks));
-  await device.DisplayDraw({ application_name: APP, priority: 50, elements });
-}
-
-/**
- * Entry point, called at the end of the file: the device runs this script from top to bottom and starts nothing by itself.
- */
-function main(): void {
-  let ticks = 0;
-  let stopped = false;
-
-  const report = (err: unknown) =>
-    console.error(`${APP}: ${err instanceof Error ? err.message : String(err)}`);
-
-  void draw(ticks).catch(report);
-
-  // Tick errors are reported, not thrown: one failed request must not stop the loop.
-  const timer = setInterval(() => {
-    ticks += 1;
-    void draw(ticks).catch(report);
-  }, TICK_MS);
-
-  // Back leaves the app. Once the timer is cleared and the handler detached, nothing keeps it alive and the device takes the screen back.
-  const unbind = listen("input", (event) => {
-    if (stopped || event.key !== "back" || event.action !== "short") return;
-
-    stopped = true;
-    clearInterval(timer);
-
-    // Not detached from inside the handler itself: with nothing else left the unbind stops the app on the spot, while this handler is still running.
-    setTimeout(unbind, 0);
-  });
-}
-
-main();
+type B={pairs:string[][];winners:string[];round:number;pick:number};
+type S={b:B;undo:B[];roster:string[]};let names=["Ari","Bo","Cam","Dee","Eli"];
+function seed(a:string[]):B{let size=2;while(size<a.length)size*=2;const byes=size-a.length,win=a.slice(0,byes),pool=a.slice(byes),pairs:string[][]=[];for(let i=0;i<pool.length;i+=2)pairs.push(pool.slice(i,i+2));return {pairs,winners:win,round:1,pick:0};}
+function fresh(a:string[]):S{return {b:seed(a),undo:[],roster:a.slice()};}
+desk<S>({name:"Bracket Desk",accent:"#6DA9E9",motion:{"motif":"turnout","color":"#6DA9E9","shine":"#E2F4FF"},initial:()=>fresh(names),configure:(s,v)=>{const a=String(v.players||"").split(",").map(n=>n.trim().slice(0,14)).filter(Boolean).slice(0,8);if(a.length>=2){names=a;if(!s.undo.length&&s.b.round===1&&s.roster.join("|")!==a.join("|"))Object.assign(s,fresh(a));}},
+ render:s=>{const b=s.b,p=b.pairs[0];return {title:p?"Round "+b.round:"Champion",value:p?p[b.pick]:b.winners[0],lines:[p?p.join(" vs "):"Champion "+b.winners[0],"Remaining pairs "+b.pairs.length,"Advanced "+b.winners.length,"Wheel: select winner","Click: advance / Start: undo","Hold Start: new tournament"]};},
+ action:(s,k)=>{if(k==="hold-start"){Object.assign(s,fresh(names));return;}if(k==="start"&&s.undo.length){s.b=s.undo.pop()!;return;}const b=s.b,p=b.pairs[0];if(!p)return;
+ if(k==="up"||k==="down")b.pick=1-b.pick;if(k==="ok"){s.undo.push(JSON.parse(JSON.stringify(b)) as B);b.winners.push(p[b.pick]);b.pairs.shift();b.pick=0;
+ if(!b.pairs.length&&b.winners.length>1){const a=b.winners;b.winners=[];b.round++;for(let i=0;i<a.length;i+=2)b.pairs.push(a.slice(i,i+2));}}}});
